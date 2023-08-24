@@ -8,8 +8,8 @@
   
 - Vehicle models for both lateral and longitudinal motions are modeled as LTI systems under given assumptions and under the approximation of a safe set enabling us to generate only linear constraints. Thus optimization problem is modelled as convex optimization enabling us to use open-source modelling language like CVXPY and guaranteeing convergence for the infinite time horizon
 
-- Here reference and intended trajectories are just examples random trajectories, users can their own trajectories for verification by the online verification technique
+- Here reference and intended trajectories are just examples of random trajectories, users can use their own trajectories for verification by the online verification technique
   
 - The same goes for obstacle and ego objects and constraints on optimization problems
 
-- Basic template for the algorithm ensuring only provable safe trajectories get executed for any planner giving real-time trajectories has been provided in integrate.py. It can be used as a reference for integrating the Failsafe trajectories in various projects
+- A basic template for the algorithm ensuring only provable safe trajectories get executed for any planner giving real-time trajectories has been provided in integrate.py. It can be used as a reference for integrating the Failsafe trajectories in various projects
