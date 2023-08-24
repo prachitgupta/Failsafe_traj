@@ -10,6 +10,6 @@
 
 - Here reference and intended trajectories are just examples random trajectories, users can their own trajectories for verification by the online verification technique
   
-The same goes for obstacle and ego objects and constraints on optimization problems
+- The same goes for obstacle and ego objects and constraints on optimization problems
 
 - Basic template for the algorithm ensuring only provable safe trajectories get executed for any planner giving real-time trajectories has been provided in integrate.py. It can be used as a reference for integrating the Failsafe trajectories in various projects
