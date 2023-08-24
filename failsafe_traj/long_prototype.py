@@ -33,7 +33,7 @@ w_ς1 = 1.0  # Weight for slack variable ς_lon,1
 w_ς2 = 2.0  # Weight for slack variable ς_lon,2
 status = True
 a1,b,c = 0,0,0
-v_intervals = np.linspace(vmin, vmax,  + 1)
+#v_intervals = np.linspace(vmin, vmax,  + 1)
 
 def optimize_longitudinal_trajectory():
     global status
@@ -120,11 +120,17 @@ def optimize_longitudinal_trajectory():
      '''
         constraints += [
             ##state space 
-            s[k+1] == s[k] + dt*v[k] + 0.5*(dt**2)*a[k] + (1/6)*(dt**3)*j[k] + (1/24)*(dt**4)*snap[k],
-            v[k + 1] == v[k] + dt * a[k] + 0.5 * (dt ** 2) * j[k] + (1/6) * (dt ** 3) * snap[k],
-            a[k + 1] == a[k] + dt * j[k] + (1/2) * (dt ** 2) * snap[k],
-            j[k + 1] == j[k] + dt * snap[k],
-            snap[k + 1] == u_lon[k],  # Fourth derivative of s is equal to u_lon (control input)
+            s[k+1] == s[k] + dt*v[k] + 0.5*(dt**2)*a[k] + (1/6)*(dt**3)*j[k] + (1/24)*(dt**4)* u_lon[k],
+            v[k + 1] == v[k] + dt * a[k] + 0.5 * (dt ** 2) * j[k] + (1/6) * (dt ** 3) *  u_lon[k],
+            a[k + 1] == a[k] + dt * j[k] + (1/2) * (dt ** 2) *  u_lon[k],
+            j[k + 1] == j[k] + dt * u_lon[k],
+            # # Fourth derivative of s is equal to u_lon (control input)
+
+            ##actual lti discrete approx
+            # s[k+1] == s[k] + dt*v[k] ,
+            # v[k + 1] == v[k] + dt * a[k] ,
+            # a[k + 1] == a[k] + dt * j[k] ,
+            # j[k + 1] == j[k] + dt * u_lon[k],
 
             a[k] >= a_lim1 - ς_lon1[k],  # Slack variable for deceleration limit 1
             a[k] >= a_lim2 - ς_lon2[k],  # Slack variable for deceleration limit 2
@@ -166,6 +172,7 @@ if __name__ == "__main__":
     # Time vector
     if(status == "optimal"):
     # Plotting trajectories
+        print("haa bhai mai hi hu")
         plt.figure(figsize=(10, 6))
 
         plt.subplot(3, 1, 1)
@@ -190,4 +197,3 @@ if __name__ == "__main__":
         plt.show()
     else:
         print("no feasible sol")
-    

@@ -61,8 +61,8 @@ class Ref_path:
         plt.show()
 
 # Creating an instance of the Ref_path class
-T = Ref_path([0, 5], [5, 5], 5)
-a = T.orientation()
+#T = Ref_path([0, 5], [5, 5], 5)
+#a = T.orientation()
 
 
 

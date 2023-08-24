@@ -16,7 +16,7 @@ Tin = intended_traj([(1, 11), (4, 12), (30, 11), (50, 10)])
 TTR,T_safe, initial_state_long , initial_state_lat  = x0.initial_state(Tin)  
 ## define time domain for failsafe trajectory
 T = Ref_path([0, 10], [100, 10], 5)
-Ob = obstacles(20,20)
+Ob = obstacles(20,15)
 Th = T.T # total time horizon  ##ask how to calculate
 th = Th 
 t = np.linspace(TTR,th,100)
@@ -92,4 +92,5 @@ def lateral_feasible():
             is_feasible = False
             break
     return is_feasible
-##lateral constaraints end
+
+print(lateral_feasible())

@@ -39,14 +39,14 @@ class Initial_state:
             else:
                 if (not is_in_S(e,Ob)): #i.e safe in infinite time domain
                     TTR = self.get_TTR(x0)
-                    #print(f"TTR = {TTR}") 
+                    print(f"TTR = {TTR}") 
 
                     initial_state_long = [s0,v0,a0,j0,snap0]
                     initial_state_lat = [d0 , theta0 , κ0, κ_dot0, κ_ddot0]
 
                     T_safe = self.x[: np.where(self.x==x0)[0][0]], self.y[: np.where(self.y==y0)[0][0]]
                     #print(I_S.get_v_lat(d0))
-                   # print(f"long = {initial_state_long} , lat = {initial_state_lat}")
+                    print(f"long = {initial_state_long} , lat = {initial_state_lat}")
                     return TTR,T_safe, initial_state_long , initial_state_lat          
         #print("Tin is already safe")
         return("verified")

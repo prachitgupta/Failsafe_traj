@@ -11,7 +11,7 @@ from matplotlib.ticker import MultipleLocator
 T = Ref_path([0, 5], [20, 5], 5)
 
 
-##obstacle occupancy static assumed
+##obstacle occupancy static assumed shoiuld be time varying, simplicity only one obstacle
 class obstacles:
     def __init__(self,x,y):
         self.obs1_x = x
