@@ -12,7 +12,7 @@ from long_prototype import optimize_longitudinal_trajectory
 from shapely.geometry import Point, Polygon
 
 T = Ref_path([0, 10], [100, 10], 5)
-Tin = intended_traj([(1, 10), (4, 15), (30, 11), (50, 10)])
+Tin = intended_traj([(1, 10), (4, 10), (30, 12), (50, 10)])
 x_interpolated, y_interpolated = Tin.generate_path()
 x0 = Initial_state()
 status = x0.initial_state(Tin)

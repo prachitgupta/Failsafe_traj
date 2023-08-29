@@ -12,7 +12,7 @@ from initial_state import Initial_state
 
 
 X0 = Initial_state()
-Tin = intended_traj([(1, 11), (4, 12), (30, 11), (50, 10)])
+Tin = intended_traj([(1, 10), (4, 10), (30, 10), (50, 10)])
 x0 = X0.initial_state(Tin)[2]  
 TTR = X0.initial_state(Tin)[0]  
 Ob = obstacles(40,10)
@@ -35,7 +35,7 @@ status = True
 a1,b,c = 0,0,0
 #v_intervals = np.linspace(vmin, vmax,  + 1)
 
-def optimize_longitudinal_trajectory():
+def optimize_longitudinal_trajectory(i,f):
     global status
     # Initialize the control input variable (acceleration, 4th derivative of s)
     u_lon = cp.Variable(num_steps) #generated tuple of 51 control inputs
@@ -67,31 +67,36 @@ def optimize_longitudinal_trajectory():
     a_s_max = 8
     v_b = 0
     h = 5  # Number of linear segments
-    global a1,b,c
-    # Linear functions for safe distance approximation
-    def g_i(x, x_i, x_next):
-        global a1,b,c
-        f_x_i = a1 * x_i ** 2 + b * x_i + c
-        f_x_next = a1* x_next ** 2 + b * x_next + c
-        slope = (f_x_next - f_x_i) / (x_next - x_i)
-        print((x - x_i))
-        return slope * (x - x_i) + f_x_i
+    # global a1,b,c
+    # # Linear functions for safe distance approximation
+    # def g_i(x, x_i, x_next):
+    #     global a1,b,c
+    #     f_x_i = a1 * x_i ** 2 + b * x_i + c
+    #     f_x_next = a1* x_next ** 2 + b * x_next + c
+    #     slope = (f_x_next - f_x_i) / (x_next - x_i)
+    #     print((x - x_i))
+    #     return slope * (x - x_i) + f_x_i
 
-    # Piecewise linear approximation of safe distance
-    def safe_distance(v):
-        global v_intervals
-        v_intervals = np.linspace(vmin, vmax, h + 1)
-        safe_distances = [g_i(v, v_intervals[i], v_intervals[i + 1]) for i in range(h)]
-        #print(cp.vstack(safe_distances))
-        return cp.vstack(safe_distances)
+    # # Piecewise linear approximation of safe distance
+    # def safe_distance(v):
+    #     global v_intervals
+    #     v_intervals = np.linspace(vmin, vmax, h + 1)
+    #     safe_distances = [g_i(v, v_intervals[i], v_intervals[i + 1]) for i in range(h)]
+    #     #print(cp.vstack(safe_distances))
+    #     return cp.vstack(safe_distances)
 
-    # Longitudinal position constraint incorporating safe distance
-    def longitudinal_position_constraint(v, s_max):
-        return v + safe_distance(v) - s_max
+    # # Longitudinal position constraint incorporating safe distance
+    # def longitudinal_position_constraint(v, s_max):
+    #     return v + safe_distance(v) - s_max
 
     # Constraints: initial conditions, and dynamics constraint
     constraints = [
-        s[0] == s0, v[0] == v0, a[0] == a0, j[0] == j0, 
+        s[0] == i[0], v[0] == i[1], a[0] == i[2], j[0] == i[3], 
+    ]
+
+    #final position
+    constraints += [
+        s[99] == f[0], 
     ]
     
     ## LTI Systems
@@ -136,20 +141,20 @@ def optimize_longitudinal_trajectory():
             a[k] >= a_lim2 - ς_lon2[k],  # Slack variable for deceleration limit 2
 
             ## obstacle avoidance constraint
-            s[k] >= s_min,
-            s[k] <= s_max,
+            # s[k] >= s_min,
+            # s[k] <= s_max,
             # Velocity inequality constraints
             v[k] >= vmin,
             v[k] <= vmax,
             # Acceleration inequality constraints
             a[k] >= amin,
             a[k] <= amax,
-            # jerk inequality constraints
-            j[k] >= jmin,
-            j[k] <= jmax,
+            # # jerk inequality constraints
+            # j[k] >= jmin,
+            # j[k] <= jmax,
 
             ##invariably safe set constraints
-            s[k] + delta_eva <= s_max ,
+            # s[k] + delta_eva <= s_max ,
 
             ## evasive acc constraints
         ]    

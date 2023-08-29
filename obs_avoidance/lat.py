@@ -9,25 +9,28 @@ from matplotlib.ticker import MultipleLocator
 from obstacle import obstacles,ego
 from invariably_safe_set import *
 from initial_state import Initial_state
+from safe_points import *
 
 ## occupancy assumed as a circle not 3 equidistant circles as explained in paper
 X0 = Initial_state()
-Tin = intended_traj([(1, 11), (4, 12), (30, 11), (50, 10)])
+Tin = intended_traj([(1, 10), (4, 10), (30, 10), (50, 10)])
 x0 = X0.initial_state(Tin)[3]  
+s0 =  X0.initial_state(Tin)[2][0]
 v =  X0.initial_state(Tin)[2][1]
 TTR = X0.initial_state(Tin)[0]  
-Ob = obstacles(40,10)
+Ob = obstacles(20,10)
 ## define time domain for failsafe trajectory
 T = Ref_path([0, 10], [100, 10], 5)
 Th = T.T # total time horizon  ##ask how to calculate
 alpha = T.orientation() ##orientation assumed to be constant of ref so ignored time horizon
 alpha =  np.insert(alpha, 0, 0)
-print(alpha.shape)
+
 t = np.linspace(TTR,Th,100)
 dt = t[1] - t[0]
 
 # Initial and final conditions
 d0,theta0, K0, Kdot0, Kddot0 = x0  # Initial state (position, velocity, acceleration, jerk))
+# df = get_safe_point_lat(s0,d0)
 num_steps= 100
 
 # Define lateral motion parameters based on the longitudinal trajectory
@@ -35,7 +38,7 @@ num_steps= 100
 # State-space representation
 
 # Main function for lateral motion optimization
-def optimize_lateral_motion():
+def optimize_lateral_motion(i,f):
     # Initialize state vector and time vector
     x_lat = cp.Variable((4, num_steps)) #dimension of state is 4
     time = t
@@ -54,13 +57,21 @@ def optimize_lateral_motion():
     cost = w_d * cp.sum_squares(x_lat[0, :]) + w_theta * cp.sum_squares(x_lat[1, :] - alpha[:]) +  w_kappa * cp.sum_squares(x_lat[2, :]) +  w_kappa_dot * cp.sum_squares(x_lat[3, :])
    
     # Constraints: initial conditions, and dynamics constraint
+
     constraints = [
-        x_lat[:, 0] == np.array([d0, theta0, K0, Kdot0]).reshape(-1),  # Initial state
+        x_lat[:, 0] == np.array([i]).reshape(-1),  # Initial state
+    ]
+
+    #final state
+    constraints += [
+        x_lat[0,99] == f[0],
     ]
     
     # State space constraints
     for k in range(num_steps - 1):
+        
 
+        ## in actual state space 5 = v(t) planned from long motion
         A_lat = np.array([[0, 5, 0, 0],
                           [0, 0, 5, 0],
                           [0, 0, 0, 1],
@@ -98,6 +109,7 @@ def optimize_lateral_motion():
 
 
 if __name__ == "__main__":
+
     # Optimize lateral motion
     x_lat_traj, u_lat_traj, time = optimize_lateral_motion()
 

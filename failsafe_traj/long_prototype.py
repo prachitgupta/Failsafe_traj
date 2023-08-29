@@ -12,7 +12,8 @@ from initial_state import Initial_state
 
 
 X0 = Initial_state()
-Tin = intended_traj([(1, 11), (4, 12), (30, 11), (50, 10)])
+#(1, 10), (10, 10), (30, 10), (50, 10)
+Tin = intended_traj([(1, 10), (4, 10), (30, 10), (50, 10)])
 x0 = X0.initial_state(Tin)[2]  
 TTR = X0.initial_state(Tin)[0]  
 Ob = obstacles(40,10)
