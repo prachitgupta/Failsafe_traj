@@ -27,11 +27,7 @@ alpha =  np.insert(alpha, 0, 0)
 
 t = np.linspace(TTR,Th,100)
 dt = t[1] - t[0]
-##data for a car
-amax = 8
-amin = -10
-kappa_max = 0.2
-kappa_min = -0.2
+
 # Initial and final conditions
 d0,theta0, K0, Kdot0, Kddot0 = x0  # Initial state (position, velocity, acceleration, jerk))
 # df = get_safe_point_lat(s0,d0)
@@ -40,13 +36,6 @@ num_steps= 100
 # Define lateral motion parameters based on the longitudinal trajectory
 
 # State-space representation
-def compute_curvature_limits(v, a_max, kappa_max, kappa_min):
-    a_tilde = (a_max - a(t)) / v(t)
-    
-    k_lim_max = max(-1* (np.sqrt( a_max ** 2 - a(t)**2) / v(t) ** 2, kappa_min))
-    k_lim_min = min(np.sqrt( a_max ** 2 - a(t)**2) / v(t) ** 2, kappa_max)
-    
-    return k_lim_max, k_lim_min
 
 # Main function for lateral motion optimization
 def optimize_lateral_motion(i,f):
@@ -108,12 +97,7 @@ def optimize_lateral_motion(i,f):
             x_lat[:, k + 1] == x_next,
             z_lat[:,k+1] == x_lat[1, k] - alpha[k]
         ]
-    ### feasibility constrains
-     constraints += [
-            x_lat[:, k + 1] == x_next,
-            z_lat[:,k+1] == x_lat[1, k] - alpha[k]
-        ]
-
+    ### non linear cnstraints
     # Create the optimization problem
     problem = cp.Problem(cp.Minimize(cost), constraints)
 

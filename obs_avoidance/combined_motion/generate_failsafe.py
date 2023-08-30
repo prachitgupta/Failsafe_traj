@@ -13,7 +13,7 @@ from lat import optimize_lateral_motion
 from safe_points import *
 
 T = Ref_path([0, 10], [100, 10], 5)
-Tin = intended_traj([(1, 10), (4, 10), (30, 10), (50, 10)])
+Tin = intended_traj([(0, 10, 0),(50, 10)])
 x_interpolated, y_interpolated = Tin.generate_path()
 x0 = Initial_state()
 status = x0.initial_state(Tin)
@@ -35,7 +35,7 @@ plt.figure(figsize=(10, 6))
 plt.subplot(2, 1, 1)
 plt.plot(xref, yref, label='Reference Trajectory',color = "green")
 plt.plot(initial_state_long[0] , initial_state_lat[0], marker = 'o' ,color = "black")
-plt.plot(20 , 10, marker = 'o' ,color = "black")
+plt.plot(20 , 10, marker = 'x' ,color = "red")
 plt.plot(x_interpolated, y_interpolated, label='intended',color = "black")
 if(status == "verified"):
     plt.plot(x_interpolated, y_interpolated, label='safe',color = "blue")
@@ -107,7 +107,6 @@ y_major_locator = MultipleLocator(2)
 plt.gca().yaxis.set_major_locator(y_major_locator)
 plt.legend()
 
-plt.subplot(2, 1, 2)
 #a_traj_degrees = self.orientation()
 #plt.plot(self.time[:-1], a_traj_degrees, label='Orientation (a)')
 plt.xlabel('Time (s)')

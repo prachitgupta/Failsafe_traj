@@ -8,21 +8,46 @@ from ref import Ref_path
 #simple cubic interpolations, no control inputs 
 class intended_traj:
     def __init__(self, points):
-        self.waypoints = np.array(points)
+        self.start = np.array(points[0])
+        self.goal = np.array(points[1])
 
         # Time points corresponding to the waypoints (normalized between 0 and 1)
-        self.time_points = np.linspace(0, 1, len(self.waypoints))
+        # self.time_points = np.linspace(0, 1, len(self.waypoints))
 
         # Generate `t` points using np.linspace()
         self.t = np.linspace(0, 5, 100)
 
+    def kinematic_bicycle_model(self,state, control):
+        x, y, theta = state
+        v, omega = control
+        dt = 0.1
+        x_next = x + v * np.cos(theta) * dt
+        y_next = y + v * np.sin(theta) * dt
+        theta_next = theta + omega * dt
+        return np.array([x_next, y_next, theta_next])
+
+
     def generate_path(self):
         # Perform cubic spline interpolation to get x(t) and y(t) values
-        x_spline = CubicSpline(self.time_points, self.waypoints[:, 0])
-        y_spline = CubicSpline(self.time_points, self.waypoints[:, 1])
-        x_interpolated = x_spline(self.t / 5)
-        y_interpolated = y_spline(self.t / 5)
-        return x_interpolated, y_interpolated
+        # x_spline = CubicSpline(self.time_points, self.waypoints[:, 0])
+        # y_spline = CubicSpline(self.time_points, self.waypoints[:, 1])
+        # x_interpolated = x_spline(self.t / 5)
+        # y_interpolated = y_spline(self.t / 5)
+        # Generate smooth control inputs (constant velocity and zero angular velocity)
+        num_steps = 100
+        T = 5
+        v = np.linspace(0, np.linalg.norm(self.goal - self.start[:2]) / T, num_steps-1)
+        omega = np.zeros(num_steps-1) #NO ROTATION
+        controls = np.vstack((v, omega))
+
+        # Simulate the trajectory
+        trajectory = [self.start]
+        current_state = self.start
+        for control in controls.T:
+            current_state = self.kinematic_bicycle_model(current_state, control)
+            trajectory.append(current_state)
+        trajectory = np.array(trajectory)
+        return trajectory[:, 0], trajectory[:, 1]
     
     def orientation_at_point(self, x, y):
         return np.arctan2(y[1:] - y[:-1], x[1:] - x[:-1])
@@ -121,7 +146,7 @@ class intended_traj:
         plt.figure(figsize=(10, 6))
         plt.subplot(2, 1, 1)
         plt.plot(x_interpolated, y_interpolated, label='Smooth Spline Trajectory', color='b')
-        plt.scatter(self.waypoints[:, 0], self.waypoints[:, 1], color='red', label='Waypoints')
+        plt.scatter(self.goal, self.start[: 2], color='red', label='Waypoints')
         plt.xlabel('X Position')
         plt.ylabel('Y Position')
         plt.legend()
@@ -136,15 +161,15 @@ class intended_traj:
         plt.ylabel('Orientation (degrees)')
         plt.show()
         '''
-        plt.subplot(2, 1, 2)
-        state = self.state()
-        print(state)
-        #plt.ylim(0,10)
-        plt.plot(s, d, label='Curvilinear')
-        plt.xlabel('S')
-        plt.ylabel('D')
+        # plt.subplot(2, 1, 2)
+        # state = self.state()
+        # print(state)
+        # #plt.ylim(0,10)
+        # plt.plot(s, d, label='Curvilinear')
+        # plt.xlabel('S')
+        # plt.ylabel('D')
         plt.show()
 
-#Tin = intended_traj([(1, 11), (4, 12), (30, 11), (50, 10)])
-#state = Tin.state()
+# Tin = intended_traj([(0, 10, 0),(40, 10)])
+# Tin.plot()
 

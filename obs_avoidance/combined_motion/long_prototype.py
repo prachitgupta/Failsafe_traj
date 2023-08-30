@@ -12,10 +12,10 @@ from initial_state import Initial_state
 
 
 X0 = Initial_state()
-Tin = intended_traj([(1, 10), (4, 10), (30, 10), (50, 10)])
+Tin = intended_traj([(0, 10, 0),(50, 10)])
 x0 = X0.initial_state(Tin)[2]  
 TTR = X0.initial_state(Tin)[0]  
-Ob = obstacles(40,10)
+Ob = obstacles(20,10)
 ## define time domain for failsafe trajectory
 T = Ref_path([0, 10], [100, 10], 5)
 Th = T.T # total time horizon  ##ask how to calculate
