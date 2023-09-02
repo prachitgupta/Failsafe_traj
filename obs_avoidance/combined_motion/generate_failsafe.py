@@ -94,6 +94,7 @@ else:
         ## only continuity and differentiability constraint
         # x_latf =  optimize_lateral_motion(i_lat_f,0,x_long)[0]
         i_lat_f[2 :] = [0,0]
+        ##infeasible due to planned long
         x_latf =  optimize_lateral_motion(i_lat_f,[d3f,0,0,0],x_longf)[0]
         # generate trajectory 2
         plot(x_longf[0], x_latf[0])

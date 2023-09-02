@@ -9,6 +9,7 @@ from matplotlib.ticker import MultipleLocator
 from obstacle import obstacles,ego
 from invariably_safe_set import *
 from initial_state import Initial_state
+from lateral_constraints import *
 
 ## occupancy assumed as a circle not 3 equidistant circles as explained in paper
 X0 = Initial_state()
@@ -61,6 +62,19 @@ def optimize_lateral_motion(i,f,Lon):
     kdot_min = -0.2
     kdot_max = 0.2
 
+    a_max = 10
+    a_min = -10
+
+    def calculate_kappa_lim_max(v, a, a_max, kappa_max):
+   
+        kappa_lim_max = np.minimum(np.sqrt((a_max**2- a**2))/ v**2, k_max)
+        return kappa_lim_max
+
+    def calculate_kappa_lim_min(v, a, a_max, kappa_min):
+
+        kappa_lim_min = np.maximum(-1*(np.sqrt((a_max**2- a**2))/ v**2), k_min)
+        return kappa_lim_min 
+
 
     # Cost function
     cost = w_d * cp.sum_squares(x_lat[0, :]) + w_theta * cp.sum_squares(x_lat[1, :] - alpha[:]) +  w_kappa * cp.sum_squares(x_lat[2, :]) +  w_kappa_dot * cp.sum_squares(x_lat[3, :])
@@ -81,12 +95,16 @@ def optimize_lateral_motion(i,f,Lon):
     for k in range(num_steps - 1):
         
 
-        ## in actual state space 5 = v(t) planned from long motion
-        v = Lon[1] ## 100 values of discretized v acc to long motion
-        # A_lat = np.array([[0, v[k], 0, 0],
-        #                   [0, 0, v[k], 0],
-        #                   [0, 0, 0, 1],
-        #                   [0, 0, 0, 0]])
+        ## constraints and state space from preplanned long motion
+        s,v,a = Lon[: 3] ## 100 values of discretized v acc to long motion
+
+        k_lim_max = calculate_kappa_lim_max(v[k], a[k], a_max, k_max)
+        k_lim_min = calculate_kappa_lim_min(v[k], a[k], a_max, k_min)
+
+        d_max = max_lateral_offset_constraint(k,s)
+        d_min = min_lateral_offset_constraint(k,s)
+
+
 
         A_lat = np.array([[0, v[k], 0, 0],
                           [0, 0, v[k], 0],
@@ -113,13 +131,23 @@ def optimize_lateral_motion(i,f,Lon):
             x_lat[:, k + 1] == x_next,
             z_lat[:,k+1] == x_lat[1, k] - alpha[k]
         ]
+        
+          ### inequality cnstraints
+        constraints += [
+                # x_lat[0,k] >= d_min,
+                # x_lat[0,k] <= d_max,
+
+                x_lat[2,k] >= k_lim_min,
+                x_lat[2,k] <= k_lim_max,
+
+            ]
     ### inequality cnstraints
     constraints += [
             x_lat[0] >= d_min,
             x_lat[0] <= d_max,
 
-            x_lat[1] >= k_min,
-            x_lat[1] <= k_max,
+            # x_lat[1] >= k_lim_min,
+            # x_lat[1] <= k_lim_max,
 
             x_lat[2] >= kdot_min,
             x_lat[2] <= kdot_max,
