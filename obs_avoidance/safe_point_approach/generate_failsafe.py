@@ -49,6 +49,7 @@ else:
     xf , yf = Yinv(sf,df)
     plt.plot(xf,yf, marker = 'o' ,color = "green")
     f1 = [df,0,0,0]
+    print(df)
     x_lat = optimize_lateral_motion(i1,f1)[0]
     d = x_lat[0]
     # s,v,a,j,u = optimize_longitudinal_trajectory()

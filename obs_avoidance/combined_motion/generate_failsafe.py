@@ -17,7 +17,18 @@ Tin = intended_traj([(0, 10, 0),(50, 10)])
 x_interpolated, y_interpolated = Tin.generate_path()
 x0 = Initial_state()
 status = x0.initial_state(Tin)
-print("")
+TTR = status[0]
+
+def plot(s,d):
+    x_r = []
+    y_r = []
+    # print(d)
+    for si,di in zip(s,d):
+        x, y = Yinv(si,di)
+        x_r.append(x)
+        y_r.append(y)
+    plt.plot(x_r,y_r ,label='emergency',color = "red")
+
 if(status == "verified"):
     print("execute intended trajectory")
     
@@ -40,60 +51,89 @@ plt.plot(x_interpolated, y_interpolated, label='intended',color = "black")
 if(status == "verified"):
     plt.plot(x_interpolated, y_interpolated, label='safe',color = "blue")
 else:
-    ##plan lat from ttr to safe_point_lat
+    ##plan lat from ttr 
     X0 = x0.initial_state(Tin) 
-    i1 = X0[3][: -1]
-    s0 = X0[2][0]
-    d0 = i1[0]
-    sf,df = get_safe_point_lat(s0,d0)
-    xf , yf = Yinv(sf,df)
+    i_lat_1 = X0[3][: -1]
+    i_lon_1 = X0[2][: -1]
+    s0 = i_lon_1[0]
+    d0 = i_lat_1[0]
+    # d0 = i1[0]
+    s_safe1,d_safe1 = get_safe_point_lat(s0,d0)
+    xf , yf = Yinv( s_safe1,d_safe1)
     plt.plot(xf,yf, marker = 'o' ,color = "green")
-    f1 = [df,0,0,0]
-    x_lat = optimize_lateral_motion(i1,f1)[0]
-    d = x_lat[0]
-    # s,v,a,j,u = optimize_longitudinal_trajectory()
-    x_r = []
-    y_r = []
-    for di in d:
-        x, y = Yinv(s0,di)
-        x_r.append(x)
-        y_r.append(y)
-    plt.plot(x_r,y_r ,label='emergency',color = "red")
+    f1 = [d_safe1,0,0,0]
 
-    ##plan long from safe_point_lat to safe_point_long
-    i2 =  X0[2][: -1]
-    s_lon_f, d_lon_f =  get_safe_point_long(s0,df)
-    x_lon_f , y_lon_f = Yinv( s_lon_f, d_lon_f)
-    plt.plot(x_lon_f , y_lon_f, marker = 'o' ,color = "green")
-    f2 =  [s_lon_f,0,0,0]
-    s_lon = optimize_longitudinal_trajectory(i2,f2)[0]
-    # s,v,a,j,u = optimize_longitudinal_trajectory()
-    x_lon_r = []
-    y_lon_r = []
-    for si in s_lon:
-        x, y = Yinv(si,df)
-        x_lon_r.append(x)
-        y_lon_r.append(y)
-    plt.plot(x_lon_r,y_lon_r ,label='emergency',color = "red")
+    ##get lon state no final point so pass 0
+    print("1st")
+    x_long = optimize_longitudinal_trajectory(i_lon_1,0,True)
+    ## get lat state
+    x_lat =  optimize_lateral_motion(i_lat_1,f1,x_long)[0]
+    # x_lat =  optimize_lateral_motion(i_lat_1,0,x_long)[0]
+    # generate trajectory 1
+    plot(x_long[0], x_lat[0])
 
-    ##plan lat from safe_point_lon to safe_point_traj
-    i3 =  x_lat[:,99]
-    s_traj_f, d_traj_f = get_safe_point_traj(s_lon_f, d_lon_f, Tin)
-    x_traj_f , y_traj_f = Yinv( s_traj_f, d_traj_f)
-    plt.plot(x_traj_f , y_traj_f, marker = 'o' ,color = "green")
-    f3 =  [d_traj_f,0,0,0]
-    d_traj = optimize_lateral_motion(i3,f3)[0][0]
-    # s,v,a,j,u = optimize_longitudinal_trajectory()
-    x_traj_r = []
-    y_traj_r = []
-    for di in d_traj:
-        x, y = Yinv(s_lon_f,di)
-        x_traj_r.append(x)
-        y_traj_r.append(y)
-    plt.plot(x_traj_r,y_traj_r ,label='emergency',color = "red")
+    ##GET FINAL S,D FROM TRAJ
+    s2f,d2f = x_long[0][99],x_lat[0][99]
+    xf , yf = Yinv(s2f,d2f)
+    plt.plot(xf,yf, marker = 'o' ,color = "blue")
+
+    ##GET SAFE POINT FROM SET ANALYSIS
+    s_safe2 , d_safe2 =  get_safe_point_long( s2f,d2f)
+
+    if (s2f  > s_safe2):
+        #plan final
+        print("final")
+        i_lon_f = np.array([arr[99] for arr in x_long[: -1]])
+        i_lat_f = np.array([arr[99] for arr in x_lat])
+        s3f, d3f = get_safe_point_traj(s2f,d2f,Tin)
+        ##get lon state no final point so pass 0
+        ## only continuity  constraint
+        i_lon_f[1 :] = [0,0,0]
+        x_longf = optimize_longitudinal_trajectory(i_lon_f,0,True)[: -2]
+        ## get lat state
+        ## only continuity and differentiability constraint
+        # x_latf =  optimize_lateral_motion(i_lat_f,0,x_long)[0]
+        i_lat_f[2 :] = [0,0]
+        x_latf =  optimize_lateral_motion(i_lat_f,[d3f,0,0,0],x_longf)[0]
+        # generate trajectory 2
+        plot(x_longf[0], x_latf[0])
+      
+
+    else:
+   # plan long to safe
+        print(f"{ s_safe2} and {s2f}")
+        print("middle")
+        i_lonm = np.array([arr[99] for arr in x_long[: -1]])
+        ## continuity and differentiability constraint extract s, v,a and j = 0
+        i_lonm[1 :] = [0,0,0]
+        f_lonm = s_safe2
+        # x_longm = optimize_longitudinal_trajectory(i_lonm,[f_lonm])[: -2]
+        x_longm = optimize_longitudinal_trajectory(i_lonm,[f_lonm],False)
+        dm = np.full(100,d2f)
+        xf , yf = Yinv(s2f,d2f)
+        plt.plot(xf,yf, marker = 'o' ,color = "orange")
+        plot(x_longm[0], dm)
+
+    #plan final
+        print("last")
+        i_lon_f = np.array([arr[99] for arr in x_longm[: -1]])
+        i_lat_f =np.array([arr[99] for arr in x_lat])  ## no lateral plannned so same condition befor middle traj
+        s3f, d3f = get_safe_point_traj(x_longm[0][99],d2f,Tin)
+        ##get lon state no final point so pass 0
+        x_longf = optimize_longitudinal_trajectory(i_lon_f,0,False)[: -2]
+        ## get lat state
+        ## only continuity and differentiability constraints
+        i_lat_f[2 :] = [0,0]
+        x_latf =  optimize_lateral_motion(i_lat_f,[d3f,0,0,0],x_longf)[0]
+        # x_latf =  optimize_lateral_motion(i_lat_f,0,x_long)[0]
+        # generate trajectory 1
+        plot(x_longf[0], x_latf[0])
 
 
-    ###continue normal intended traj
+    ##integerate with intended
+
+    ## FINAL S MAY NOT LIE ON INTENDED TRAJ , BUT WILL BE VERY CLOSE
+    ## SMOOTH TRANSITION TO INTENDED
 
     
 
@@ -101,7 +141,7 @@ else:
 plt.xlabel('X Position')
 
 plt.ylabel('Y Position')
-plt.ylim(0, 20)
+plt.ylim(-10, 30)
 # Set y-axis ticks at intervals of 2 units
 y_major_locator = MultipleLocator(2)
 plt.gca().yaxis.set_major_locator(y_major_locator)
@@ -109,8 +149,9 @@ plt.legend()
 
 #a_traj_degrees = self.orientation()
 #plt.plot(self.time[:-1], a_traj_degrees, label='Orientation (a)')
-plt.xlabel('Time (s)')
-plt.ylabel('Orientation (degrees)')
+plt.xlabel('x')
+plt.ylabel('Y')
+plt.text(40,6,f"TTR = {TTR}")
 plt.legend()
 
 plt.tight_layout()

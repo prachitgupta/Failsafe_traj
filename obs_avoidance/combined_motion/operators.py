@@ -35,7 +35,7 @@ def Yinv(s, d):
     # Calculate Cartesian coordinates (x, y) based on curvilinear coordinates (s, d)
     x = x_ref[0] + s * np.cos(alpha) - d * np.sin(alpha)
     y = y_ref[0] + s * np.sin(alpha) + d * np.cos(alpha)
-    
+    # y = y_ref[0] + d
     return x, y
 
 

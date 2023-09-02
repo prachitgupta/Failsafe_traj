@@ -35,7 +35,7 @@ status = True
 a1,b,c = 0,0,0
 #v_intervals = np.linspace(vmin, vmax,  + 1)
 
-def optimize_longitudinal_trajectory(i,f):
+def optimize_longitudinal_trajectory(i,f,avoid_obstacle):
     global status
     # Initialize the control input variable (acceleration, 4th derivative of s)
     u_lon = cp.Variable(num_steps) #generated tuple of 51 control inputs
@@ -53,13 +53,14 @@ def optimize_longitudinal_trajectory(i,f):
     # Define the cost function to be minimized (minimize jerk)
     cost = cp.sum_squares(a) * w_a + cp.sum_squares(j) * w_j + cp.sum(ς_lon1) * w_ς1 + cp.sum(ς_lon2) * w_ς2
     s_max = Ob.limits()[0] if  Ob.limits()[0] > s0 else 95  ##only for preceeding in lane
-    s_min = Ob.limits()[1] if  Ob.limits()[1] < s0 else 0
+    s_min = Ob.limits()[0] if  Ob.limits()[0] < s0 else 0
+    # print(s_max >  s_min)
     vmin = 0
-    vmax = 40
-    amax = 8
+    vmax = 50
+    amax = 10
     amin = -10
-    jmax = 8
-    jmin = -6
+    jmax = 10
+    jmin = -10
     delta_brake = 0.3
     ##doubt a_d_max =  constant constraint or has to be calculated
     a_d_max = 8
@@ -95,14 +96,21 @@ def optimize_longitudinal_trajectory(i,f):
     ]
 
     #final position
-    constraints += [
-        s[99] == f[0], 
-    ]
+    if(f):
+        constraints += [
+            s[99] == f[0], 
+        ]
     
     ## LTI Systems
     for k in range(num_steps - 1):
         delta_eva = calculate_evasive_distance(v0, a_d_max, 3.5, 0.3, 0, 0.6)
         delta_eva = 3
+
+        if(avoid_obstacle):
+            constraints += [
+                s[k] >= s_min,
+                s[k] <= s_max , 
+            ]
         '''
         if (a_s_max_b <= a_s_max or False):
             a1 = 1 / (2 * (abs(a_s_max_b) - abs(a_s_max)))
@@ -140,9 +148,11 @@ def optimize_longitudinal_trajectory(i,f):
             a[k] >= a_lim1 - ς_lon1[k],  # Slack variable for deceleration limit 1
             a[k] >= a_lim2 - ς_lon2[k],  # Slack variable for deceleration limit 2
 
-            ## obstacle avoidance constraint
+            # ## obstacle avoidance constraint
             # s[k] >= s_min,
-            # s[k] <= s_max,
+            # s[k] <= s_max ,
+
+
             # Velocity inequality constraints
             v[k] >= vmin,
             v[k] <= vmax,
@@ -154,7 +164,7 @@ def optimize_longitudinal_trajectory(i,f):
             # j[k] <= jmax,
 
             ##invariably safe set constraints
-            # s[k] + delta_eva <= s_max ,
+           # s[k] + delta_eva <= s_max ,
 
             ## evasive acc constraints
         ]    
@@ -165,6 +175,7 @@ def optimize_longitudinal_trajectory(i,f):
     problem.solve(solver=cp.ECOS)
     status = problem.status
     if(status == "optimal"):
+        print(f"long stat = {status}")
         return s.value, v.value, a.value, j.value, u_lon.value
     else:
         print("infeasible")

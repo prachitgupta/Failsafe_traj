@@ -9,7 +9,6 @@ from matplotlib.ticker import MultipleLocator
 from obstacle import obstacles,ego
 from invariably_safe_set import *
 from initial_state import Initial_state
-from safe_points import *
 
 ## occupancy assumed as a circle not 3 equidistant circles as explained in paper
 X0 = Initial_state()
@@ -38,7 +37,7 @@ num_steps= 100
 # State-space representation
 
 # Main function for lateral motion optimization
-def optimize_lateral_motion(i,f):
+def optimize_lateral_motion(i,f,Lon):
     # Initialize state vector and time vector
     x_lat = cp.Variable((4, num_steps)) #dimension of state is 4
     time = t
@@ -53,6 +52,16 @@ def optimize_lateral_motion(i,f):
     w_kappa = 1.0
     w_kappa_dot = 1.0
 
+    d_min = -10
+    d_max = 10
+
+    k_min = -0.2
+    k_max = 0.2
+
+    kdot_min = -0.2
+    kdot_max = 0.2
+
+
     # Cost function
     cost = w_d * cp.sum_squares(x_lat[0, :]) + w_theta * cp.sum_squares(x_lat[1, :] - alpha[:]) +  w_kappa * cp.sum_squares(x_lat[2, :]) +  w_kappa_dot * cp.sum_squares(x_lat[3, :])
    
@@ -63,17 +72,24 @@ def optimize_lateral_motion(i,f):
     ]
 
     #final state
-    constraints += [
-        x_lat[0,99] == f[0],
-    ]
+    if(f):
+        constraints += [
+            x_lat[0,99] == f[0],
+        ]
     
     # State space constraints
     for k in range(num_steps - 1):
         
 
         ## in actual state space 5 = v(t) planned from long motion
-        A_lat = np.array([[0, 5, 0, 0],
-                          [0, 0, 5, 0],
+        v = Lon[1] ## 100 values of discretized v acc to long motion
+        # A_lat = np.array([[0, v[k], 0, 0],
+        #                   [0, 0, v[k], 0],
+        #                   [0, 0, 0, 1],
+        #                   [0, 0, 0, 0]])
+
+        A_lat = np.array([[0, v[k], 0, 0],
+                          [0, 0, v[k], 0],
                           [0, 0, 0, 1],
                           [0, 0, 0, 0]])
         
@@ -82,7 +98,7 @@ def optimize_lateral_motion(i,f):
                           [0],
                           [1]])
         
-        C_lat = np.array([[-5],
+        C_lat = np.array([[-v[k]],
                           [0],
                           [0],
                           [1]])
@@ -97,13 +113,24 @@ def optimize_lateral_motion(i,f):
             x_lat[:, k + 1] == x_next,
             z_lat[:,k+1] == x_lat[1, k] - alpha[k]
         ]
-    ### non linear cnstraints
+    ### inequality cnstraints
+    constraints += [
+            x_lat[0] >= d_min,
+            x_lat[0] <= d_max,
+
+            x_lat[1] >= k_min,
+            x_lat[1] <= k_max,
+
+            x_lat[2] >= kdot_min,
+            x_lat[2] <= kdot_max,
+
+        ]
     # Create the optimization problem
     problem = cp.Problem(cp.Minimize(cost), constraints)
 
     # Solve the problem using the chosen solver (e.g., ECOS)
     problem.solve(solver=cp.ECOS)
-    print(problem.status)
+    print(f" lat stat = {problem.status} ")
 
     return x_lat.value, u_lat.value, time
 
