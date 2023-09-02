@@ -143,8 +143,8 @@ def optimize_lateral_motion(i,f,Lon):
             ]
     ### inequality cnstraints
     constraints += [
-            x_lat[0] >= d_min,
-            x_lat[0] <= d_max,
+            # x_lat[0] >= d_min,
+            # x_lat[0] <= d_max,
 
             # x_lat[1] >= k_lim_min,
             # x_lat[1] <= k_lim_max,
