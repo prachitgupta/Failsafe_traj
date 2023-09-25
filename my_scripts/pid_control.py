@@ -157,7 +157,7 @@ if __name__ == "__main__":
             #wps = np.random.choice(wps(0.3))
             wp = np.random.choice(wps, 1)
             ##pass step input desired velocity and target wp 
-            control_signal = control_signal.run_step(5,wp)
+            control_signal = control_vehicle.run_step(5,wp)
             ego_vehicle.apply_control(control_signal)
 
 
