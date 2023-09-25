@@ -26,7 +26,7 @@ class PIDcontrol:
         current_steering = self.lat_control.run_step(waypoint)
         ## create carla control object to send control commands to vehicle
         control = carla.VehicleControl()
-
+        ## control input is acc and steering
         return control
 
 class LongControl:
@@ -69,7 +69,7 @@ class LatControl:
 
         ##define error buffer deque quicker append and pop operations than list
         self.errorBuffer = queue.deque(maxLen = 10)
-    def run_step(self, waypoint):
+    def run_step(self,v_target, waypoint):
         ##long controller returns acc
         acc = self.long_control.run_step(v_target)
         ##lat control gives desired steering
