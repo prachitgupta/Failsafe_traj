@@ -144,7 +144,7 @@ if __name__ == "__main__":
         actor.append(ego_vehicle)
         spectator = world.get_spectator()
         transform = ego_vehicle.get_transform()
-        print(carla.Transform(transform.location + carla.Location(x=5,y=0,z=3)))
+       # print(carla.Transform(transform.location + carla.Location(x=5,y=0,z=3)))
         spectator.set_transform(carla.Transform(transform.location + carla.Location(x=5,y=0,z=3),
         carla.Rotation(pitch= 0 ,yaw = 0)))   ##set spectator view
         # wps = map.get_waypoint(ego_vehicle.get_location())
@@ -158,6 +158,7 @@ if __name__ == "__main__":
             wp = np.random.choice(wps, 1)
             ##pass step input desired velocity and target wp 
             control_signal = control_signal.run_step(5,wp)
+            ego_vehicle.apply_control(control_signal)
 
 
 
