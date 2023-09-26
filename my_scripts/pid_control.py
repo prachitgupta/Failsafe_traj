@@ -14,7 +14,7 @@ class PIDcontrol:
         self.max_thr = max_thr
         self.max_steer = max_steer
         self.max_brak = max_break
-        self.past_steering = self.ego.get_control.steer
+        self.past_steering = self.ego.get_control().steer
         self.world = ego.get_world()
         self.long_control = LongControl(self.ego, **arg_long)
         self.lat_control = LatControl(self.ego, **arg_lat)
@@ -43,10 +43,10 @@ class PIDcontrol:
             current_steering = self.past_steering - 0.1
 
         if current_steering >= 0:
-            steering = min(self.max_steering, current_steering)
+            steering = min(self.max_steer, current_steering)
 
         else:
-            steering = max(-self.max_steering, current_steering)
+            steering = max(-self.max_steer, current_steering)
 
         #send control commands via VehicleControl() object see docs
         control.steer = steering
@@ -63,16 +63,17 @@ class LongControl:
         self.Kp = Kp
         self.Kd = Kd
         self.Ki = Ki
+        self.dt = dt
 
         ##define error buffer deque quicker append and pop operations than list
-        self.errorBuffer = queue.deque(maxLen = 10)
+        self.errorBuffer = queue.deque(maxlen = 10)
 
     
     def run_step(self, v_target):
         ##long controller returns acc
         v_current = get_speed(self.ego)
         ##apply pid on speed
-        return self.pid_controller(self, v_target, v_current)
+        return self.pid_controller(v_target, v_current)
     
     def pid_controller(self,target, current):
         error = target - current
@@ -95,21 +96,21 @@ class LatControl:
         self.Kp = Kp
         self.Kd = Kd
         self.Ki = Ki
-
+        self.dt = dt
         ##define error buffer deque quicker append and pop operations than list
-        self.errorBuffer = queue.deque(maxLen = 10)
+        self.errorBuffer = queue.deque(maxlen = 10)
     def run_step(self, waypoint):
         ##long controller returns acc
         return self.pid_controller(waypoint, self.ego.get_transform())
 
-    def pid_controller(self.waypoint, vehicle_transform):
+    def pid_controller(self,waypoint, vehicle_transform):
         ##basically pid on heading error/angle_between, dot and cross product of desired heading(final loc = wp) and actual heading
         v_begin = vehicle_transform.location
-        v_end = v_begin + carla.Location(x = math.cos(math.radians(vehicle_transform.rotation.yaw)), y = math.sin(math,radians(vehicle_transform.rotation.yaw)))
+        v_end = v_begin + carla.Location(x = math.cos(math.radians(vehicle_transform.rotation.yaw)), y = math.sin(math.radians(vehicle_transform.rotation.yaw)))
         v_vector =  np.array([v_end.x - v_begin.x, v_end.y - v_begin.y, 0.0])
         w_vector = np.array([waypoint.transform.location.x - v_begin.x, waypoint.transform.location.y - v_begin.y,0.0 ])
 
-        angle_btw = math.acos(np.clip(np.dot(w_vector, v_vector)/np.linalg.norm(w_vector)* np.linalg.norm(v_vector)), -1, 1)
+        angle_btw = math.acos(np.clip(np.dot(w_vector, v_vector)/np.linalg.norm(w_vector)* np.linalg.norm(v_vector),-1, 1))
         cross = np.cross(v_vector, w_vector)
         
         ## jth component less than 0 => - angle_btw
@@ -150,12 +151,13 @@ if __name__ == "__main__":
         # wps = map.get_waypoint(ego_vehicle.get_location())
         # print(wps)
 
-        control_vehicle = PIDcontrol(ego_vehicle, args_lat = {'Kp':1,'Kd':0,'Ki':0}, args_long = {'Kp':1,'Kd':0,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
+        control_vehicle = PIDcontrol(ego_vehicle, arg_lat = {'Kp':1,'Kd':0,'Ki':0}, arg_long = {'Kp':1,'Kd':0,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
         while True:
             #getting the closest waypoint to a specific location 
             wps = map.get_waypoint(ego_vehicle.get_location())
-            #wps = np.random.choice(wps(0.3))
-            wp = np.random.choice(wps, 1)
+            ##no syntax meaning
+            wp = np.random.choice(wps.next(0.3))
+            #wp = np.random.choice(wps, 1)
             ##pass step input desired velocity and target wp 
             control_signal = control_vehicle.run_step(5,wp)
             ego_vehicle.apply_control(control_signal)
