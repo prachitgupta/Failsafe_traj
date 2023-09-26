@@ -167,7 +167,7 @@ if __name__ == "__main__":
             # camera_transform = carla.Transform(carla.Location(x=1.5, y = 2.4))
             # ## spawned at 3d position i.e transform
             # camera = world.spawn_actor(camera_bp, camera_transform)
-            # camera.listen(Lambda image : image.save_to_disk('output/%.6d'%image.frame, carla.ColorConverter.CityScapesPalette))
+            # camera.listen(lambda image : image.save_to_disk('output/%.6d'%image.frame, carla.ColorConverter.CityScapesPalette))
 
             # depth_camera_bp = blueprint_library.find('sensor.camera.depth')
             # depth_camera_bp.set_attribute('image_size_x', '800')
