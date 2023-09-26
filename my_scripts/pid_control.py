@@ -159,8 +159,24 @@ if __name__ == "__main__":
             ##pass step input desired velocity and target wp 
             control_signal = control_vehicle.run_step(5,wp)
             ego_vehicle.apply_control(control_signal)
+            ## visualize
+            camera_bp = blueprint_library.find('sensor.camera.semantic_segmentation')
+            camera_bp.set_attribute('image_size_x', '800')
+            camera_bp.set_attribute('image_size_y', '600')
+            camera_bp.set_attribute('fov', '90')
+            camera_transform = carla.Transform(carla.Location(x=1.5, y = 2.4))
+            ## spawned at 3d position i.e transform
+            camera = world.spawn_actor(camera_bp, camera_transform)
+            camera.listen(Lambda image : image.save_to_disk('output/%.6d'%image.frame, carla.ColorConverter.CityScapesPalette))
 
-
+            depth_camera_bp = blueprint_library.find('sensor.camera.depth')
+            depth_camera_bp.set_attribute('image_size_x', '800')
+            depth_camera_bp.set_attribute('image_size_y', '600')
+            depth_camera_bp.set_attribute('fov', '90')
+            depth_camera_transform = carla.Transform(carla.Location(x=1.5, y = 2.4))
+            ## spawned at 3d position i.e transform
+            depth_camera = world.spawn_actor(depth_camera_bp,  depth_camera_transform)
+            depth_camera.listen(Lambda image : image.save_to_disk('output/%.6d'%image.frame, carla.ColorConverter.CityScapesPalette))
 
     finally :
         client.apply_batch([carla.command.DestroyActor(i) for i in actor])
