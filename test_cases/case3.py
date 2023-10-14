@@ -13,12 +13,13 @@ def ego_control(vehicle,vdes):
     vehicle.set_autopilot(True)
     #vehicle.set_velocity(carla.Vector3D(x=vdes, y=0, z=0))
 
+
 def obs_control(vehicle, vdes, wayp):
 
     #simple pid control
     control_vehicle = PIDcontrol(vehicle, arg_lat = {'Kp':1,'Kd':0,'Ki':0}, arg_long = {'Kp':1,'Kd':0,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
     control_signal = control_vehicle.run_step(vdes,wayp)
-    obs_vehicle.apply_control(control_signal)
+    vehicle.apply_control(control_signal)
 
 
     # ##just move with constant velocity
@@ -59,35 +60,48 @@ if __name__ == "__main__":
         map = world.get_map()
         blueprint = world.get_blueprint_library()
         ego_bp =  blueprint.find('vehicle.lincoln.mkz_2020') 
-        obs_bp = blueprint.find("vehicle.toyota.prius")
+        leading_bp = blueprint.find("vehicle.toyota.prius")
+        opposite_bp = blueprint.find('vehicle.seat.leon') 
         spawn_points = map.get_spawn_points()
         ego_vehicle = world.spawn_actor(ego_bp,spawn_points[30])     #SPWAN POINTS TO BE CONSIDERED  60,61,62,63
         actor.append(ego_vehicle)
         spectator = world.get_spectator()
         transform = ego_vehicle.get_transform()
        # print(carla.Transform(transform.location + carla.Location(x=5,y=0,z=3)))
-        obs_transform = carla.Transform(transform.location + carla.Location(x=0,y=10,z=0) , transform.rotation)
+        leading_transform = carla.Transform(transform.location + carla.Location(x=0,y=10,z=0) , transform.rotation)
+        opposite_transform = carla.Transform(transform.location + carla.Location(x=5,y=50,z=0) , carla.Rotation(yaw=270.0))
        # print(f"{obs_transform} from {transform}")
-        obs_vehicle = world.spawn_actor(obs_bp,obs_transform)
-        if ego_vehicle is not None and obs_vehicle is not None:
-            print(f"Spawned two  vehicles")
+        leading_vehicle = world.spawn_actor(leading_bp,leading_transform)
+        actor.append(leading_vehicle)
+        opposite_vehicle = world.spawn_actor(opposite_bp,opposite_transform)
+        actor.append(opposite_vehicle)
+        if ego_vehicle is not None and leading_vehicle is not None  and opposite_vehicle is not None:
+            print(f"Spawned all  vehicles")
         else:
             print("Failed to spawn vehicles.")
 
-       ##spectator
+        ##spectator
         camera_loc = carla.Location(x=436.332245, y=-58.211384, z=26.967960)
         camera_rot = carla.Rotation(pitch=-49.312428, yaw=179.294144, roll=0.000040)
         spectator.set_transform(carla.Transform(camera_loc,camera_rot))
         
         while True:
-            wps = map.get_waypoint(obs_vehicle.get_location())
-            # select 1 waypoint randomly from list of new wp in radius 0.3 from wps
-            wp = np.random.choice(wps.next(0.3))
-            #wp = np.random.choice(wps, 1)
-            ##pass step input desired velocity and target wp 
-            obs_control(obs_vehicle,5,wp)
-            print(get_state(ego_vehicle))
+            wps1 = map.get_waypoint(leading_vehicle.get_location())
+            wp1 = np.random.choice(wps1.next(0.3))
+            wps2 = map.get_waypoint(leading_vehicle.get_location())
+            wp2 = np.random.choice(wps2.next(0.3))
+
+            ##move leading with constant velocity 50km/hr
+            obs_control(leading_vehicle,50*(5/18),wp1)
+            state_leading = get_state(leading_vehicle)
+
+            ##move opposite vehicle with 70 in oppositr direction
+            obs_control(opposite_vehicle,70*(5/18),wp2)
+            state_opposite = get_state(opposite_vehicle)
+
+            ##ego with mpc
             ego_control(ego_vehicle,vdes = 5)
+            #print(spectator.get_transform())
 
 
         
