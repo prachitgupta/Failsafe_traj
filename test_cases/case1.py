@@ -1,6 +1,4 @@
 ## overtaking leading vehicle moving with constant velocity
-import sys
-sys.path.append("/home/prachit/Desktop/failsafe_traj/Failsafe_traj/my_scripts")
 from pid_control import PIDcontrol,LongControl, LatControl
 import carla
 import numpy as np
@@ -86,7 +84,7 @@ if __name__ == "__main__":
             #wp = np.random.choice(wps, 1)
             ##pass step input desired velocity and target wp 
             obs_control(obs_vehicle,5,wp)
-            print(get_state(ego_vehicle))
+            print(get_state(obs_vehicle))
             ego_control(ego_vehicle,vdes = 5)
 
 

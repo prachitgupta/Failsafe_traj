@@ -1,6 +1,4 @@
 ## overtaking leading vehicle moving with constant velocity
-import sys
-sys.path.append("/home/prachit/Desktop/failsafe_traj/Failsafe_traj/my_scripts")
 from pid_control import PIDcontrol,LongControl, LatControl
 import carla
 import numpy as np
