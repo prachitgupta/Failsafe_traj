@@ -13,7 +13,7 @@ class PIDcontrol:
         self.ego = ego
         self.max_thr = max_thr
         self.max_steer = max_steer
-        self.max_brak = max_break
+        self.max_break = max_break
         self.past_steering = self.ego.get_control().steer
         self.world = ego.get_world()
         self.long_control = LongControl(self.ego, **arg_long)
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         while True:
             #getting the closest waypoint to a specific location 
             wps = map.get_waypoint(ego_vehicle.get_location())
-            ##no syntax meaning
+            # select 1 waypoint randomly from list of new wp in radius 0.3 from wps
             wp = np.random.choice(wps.next(0.3))
             #wp = np.random.choice(wps, 1)
             ##pass step input desired velocity and target wp 
