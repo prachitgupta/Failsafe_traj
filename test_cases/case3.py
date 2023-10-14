@@ -17,7 +17,7 @@ def ego_control(vehicle,vdes):
 def obs_control(vehicle, vdes, wayp):
 
     #simple pid control
-    control_vehicle = PIDcontrol(vehicle, arg_lat = {'Kp':1,'Kd':0,'Ki':0}, arg_long = {'Kp':1,'Kd':0,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
+    control_vehicle = PIDcontrol(vehicle, arg_lat = {'Kp':0,'Kd':0,'Ki':0}, arg_long = {'Kp':0,'Kd':0,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
     control_signal = control_vehicle.run_step(vdes,wayp)
     vehicle.apply_control(control_signal)
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         blueprint = world.get_blueprint_library()
         ego_bp =  blueprint.find('vehicle.lincoln.mkz_2020') 
         leading_bp = blueprint.find("vehicle.toyota.prius")
-        opposite_bp = blueprint.find('vehicle.seat.leon') 
+        competitor_bp = blueprint.find('vehicle.seat.leon') 
         spawn_points = map.get_spawn_points()
         ego_vehicle = world.spawn_actor(ego_bp,spawn_points[30])     #SPWAN POINTS TO BE CONSIDERED  60,61,62,63
         actor.append(ego_vehicle)
@@ -69,13 +69,13 @@ if __name__ == "__main__":
         transform = ego_vehicle.get_transform()
        # print(carla.Transform(transform.location + carla.Location(x=5,y=0,z=3)))
         leading_transform = carla.Transform(transform.location + carla.Location(x=0,y=10,z=0) , transform.rotation)
-        opposite_transform = carla.Transform(transform.location + carla.Location(x=5,y=50,z=0) , carla.Rotation(yaw=270.0))
+        competitor_transform = carla.Transform(transform.location + carla.Location(x=5,y=0,z=0) , carla.Rotation(yaw=90))
        # print(f"{obs_transform} from {transform}")
         leading_vehicle = world.spawn_actor(leading_bp,leading_transform)
         actor.append(leading_vehicle)
-        opposite_vehicle = world.spawn_actor(opposite_bp,opposite_transform)
-        actor.append(opposite_vehicle)
-        if ego_vehicle is not None and leading_vehicle is not None  and opposite_vehicle is not None:
+        competitor_vehicle = world.spawn_actor(competitor_bp,competitor_transform)
+        actor.append(competitor_vehicle)
+        if ego_vehicle is not None and leading_vehicle is not None  and competitor_vehicle is not None:
             print(f"Spawned all  vehicles")
         else:
             print("Failed to spawn vehicles.")
@@ -95,9 +95,9 @@ if __name__ == "__main__":
             obs_control(leading_vehicle,50*(5/18),wp1)
             state_leading = get_state(leading_vehicle)
 
-            ##move opposite vehicle with 70 in oppositr direction
-            obs_control(opposite_vehicle,70*(5/18),wp2)
-            state_opposite = get_state(opposite_vehicle)
+            ##move competitor vehicle with 70 in oppositr direction
+            obs_control(competitor_vehicle,70*(5/18),wp2)
+            state_competitor = get_state(competitor_vehicle)
 
             ##ego with mpc
             ego_control(ego_vehicle,vdes = 5)
