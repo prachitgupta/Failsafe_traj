@@ -15,7 +15,7 @@ def ego_control(vehicle,vdes):
 def obs_control(vehicle, vdes, wayp):
 
     #simple pid control
-    control_vehicle = PIDcontrol(vehicle, arg_lat = {'Kp':0,'Kd':0,'Ki':0}, arg_long = {'Kp':0,'Kd':0,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
+    control_vehicle = PIDcontrol(vehicle, arg_lat = {'Kp':1,'Kd':0,'Ki':0}, arg_long = {'Kp':1,'Kd':0,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
     control_signal = control_vehicle.run_step(vdes,wayp)
     vehicle.apply_control(control_signal)
 

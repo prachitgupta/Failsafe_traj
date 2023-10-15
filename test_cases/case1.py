@@ -1,10 +1,12 @@
 ## overtaking leading vehicle moving with constant velocity
-from pid_control import PIDcontrol,LongControl, LatControl
+from pid_control import PIDcontrol
+# from controller import  VehiclePIDController, PIDLateralController, PIDLongitudinalController
 import carla
 import numpy as np
 import cv2 as cv
 import queue
 import math
+# from Util_functions import get_speed
 
 # spawn our vehicle put in autopilot
 def ego_control(vehicle,vdes):
@@ -14,23 +16,10 @@ def ego_control(vehicle,vdes):
 def obs_control(vehicle, vdes, wayp):
 
     #simple pid control
-    control_vehicle = PIDcontrol(vehicle, arg_lat = {'Kp':1,'Kd':0,'Ki':0}, arg_long = {'Kp':1,'Kd':0,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
+    control_vehicle = PIDcontrol(vehicle, arg_lat = {'Kp':1.95,'Kd':.05,'Ki':0.2}, arg_long = {'Kp':1,'Kd':0.05,'Ki':0}, max_thr=  0.75, max_steer = 0.3, max_break = 0.8 )
     control_signal = control_vehicle.run_step(vdes,wayp)
     obs_vehicle.apply_control(control_signal)
 
-
-    # ##just move with constant velocity
-    # target_velocity = vdes  # Change this to your desired velocity
-    # control = carla.VehicleControl()
-    # control.throttle = 1.0  # Full throttle
-    # control.steer = 0.0  # Straight steering
-    # control.brake = 0.0  # No brakes
-    # control.hand_brake = False
-    # # Set the desired velocity
-    # control.target_velocity = target_velocity
-    # control.use_constant_velocity = True
-    # # Apply the control commands
-    # vehicle.apply_control(control)
 
 
 
@@ -80,10 +69,11 @@ if __name__ == "__main__":
         while True:
             wps = map.get_waypoint(obs_vehicle.get_location())
             # select 1 waypoint randomly from list of new wp in radius 0.3 from wps
-            wp = np.random.choice(wps.next(0.3))
+            wp = np.random.choice(wps.next(2))
+            print(wp)
             #wp = np.random.choice(wps, 1)
             ##pass step input desired velocity and target wp 
-            obs_control(obs_vehicle,5,wp)
+            obs_control(obs_vehicle,50*5/18,wp)
             print(get_state(obs_vehicle))
             ego_control(ego_vehicle,vdes = 5)
 
